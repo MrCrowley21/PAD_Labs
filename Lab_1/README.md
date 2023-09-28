@@ -799,3 +799,8 @@ the system resilience. It is considering the possibility of migrating the system
 on Kubernetes following the latter versions, as it provides a great help in app 
 monitoring and automatizes scaling process. 
 
+## Bibliography
+1. https://streamsets.com/blog/what-is-streaming-analytics/
+2. https://thenewstack.io/8-real-time-data-best-practices/
+3. https://medium.com/swlh/data-streaming-with-apache-kafka-e1676dc5e975
+4. https://kafka.apache.org/documentation/
