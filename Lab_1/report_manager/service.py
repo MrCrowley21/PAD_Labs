@@ -14,19 +14,6 @@ config = dotenv_values(".env")
 app = FastAPI()
 
 
-@app.get("/")
-def test_fast_api():
-    return {"Test Report Manager Service"}
-
-
-@app.get("/health")
-def read_status():
-    return {
-              "data_base": "connected",
-              "load": "ok"
-            }
-
-
 @app.on_event("startup")
 def startup_db_client():
     app.mongodb_client = MongoClient(config["MONGODB_CONNECTION_URI"])
@@ -38,6 +25,19 @@ def startup_db_client():
 def shutdown_db_client():
     logging.info("Disconnecting from the MongoDB database...")
     app.mongodb_client.close()
+
+
+@app.get("/")
+def test_fast_api():
+    return {"Test Report Manager Service"}
+
+
+@app.get("/health")
+def read_status():
+    return {
+              "data_base": "connected",
+              "load": "ok"
+            }
 
 
 app.include_router(report_router, tags=["reports"], prefix="/reports")

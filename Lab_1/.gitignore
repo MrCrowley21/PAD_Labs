@@ -1,3 +1,7 @@
 # envs
 graphics_manager/.env
 report_manager/.env
+gateway/.elixir_ls
+gateway/_build
+service_discovery/.elixir_ls
+service_discovery/_build

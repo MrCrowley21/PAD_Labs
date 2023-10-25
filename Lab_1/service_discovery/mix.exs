@@ -1,9 +1,9 @@
-defmodule Gateway.MixProject do
+defmodule ServiceDiscovery.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :gateway,
+      app: :service_discovery,
       version: "0.1.0",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
@@ -15,7 +15,7 @@ defmodule Gateway.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {Gateway, []}
+      mod: {ServiceDiscoverySupervisor, []}
     ]
   end
 
@@ -32,4 +32,3 @@ defmodule Gateway.MixProject do
     ]
   end
 end
-
