@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Body, Request, Response, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from typing import List
+from time import sleep
 
 from models import AnalyticReport
 
@@ -17,7 +18,7 @@ def generate_report(request: Request, report: AnalyticReport = Body(...)):
     created_report_item = request.app.database["reports"].find_one({
         "_id": new_report.inserted_id
     })
-
+    sleep(2)
     return created_report_item
 
 

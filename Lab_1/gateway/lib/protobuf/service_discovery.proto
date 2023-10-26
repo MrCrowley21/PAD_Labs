@@ -2,6 +2,7 @@ syntax="proto3";
 
 service ServiceDiscoveryGRPC{
     rpc registerService(Register) returns (RegistrationResult);
+    rpc findService(RequestService) returns (ReturnService);
 }
 
 message Register{
@@ -13,4 +14,14 @@ message Register{
 
 message RegistrationResult{
     int32 success = 1;
+}
+
+message RequestService{
+    string service_type = 1;
+}
+
+message ReturnService{
+    string address = 1;
+    string inner_port = 2;
+    bool ready = 3;
 }

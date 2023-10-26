@@ -29,6 +29,7 @@ defmodule ServiceDiscovery.MixProject do
       {:grpc, "~> 0.7"},
       {:protobuf, "~> 0.11"},
       {:google_protos, "~> 0.1"},
+      {:jason, "~> 1.2"},
     ]
   end
 end

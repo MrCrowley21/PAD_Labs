@@ -1,9 +1,12 @@
+import os
 import logging
 import uvicorn
+import requests
+from datetime import datetime
 from dotenv import dotenv_values
 from sqlalchemy.orm import Session
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 
 from models import AnalyticGraph
 from schemas import AnalyticGraphSchema
@@ -16,7 +19,17 @@ logging.basicConfig(level=logging.DEBUG)
 
 config = dotenv_values(".env")
 
+SERVICE_DISCOVERY_HOSTNAME = os.getenv('SERVICE_DISCOVERY_HOST') or 'localhost'
+SERVICE_DISCOVERY_PORT = os.getenv('SERVICE_DISCOVERY_PORT') or '4000'
+
+HOST = os.getenv('HOSTNAME') or 'localhost'
+PORT = os.getenv('SELF_PORT') or '8002'
+TIMEOUT_SECOND = 5
+
 app = FastAPI()
+
+load = 0
+reset_time = datetime.now()
 
 engine = create_engine(config["POSTGRESQL_CONNECTION_URI"], connect_args={}, future=True)
 session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine, future=True)
@@ -50,9 +63,34 @@ def read_status(db: Session = Depends(get_db)):
     return [AnalyticGraph(graph) for graph in graphs]
 
 
+@app.middleware("http")
+async def count_requests_middleware(request: Request, call_next):
+    global load, reset_time
+
+    now = datetime.now()
+    if (now - reset_time).total_seconds() >= 60:
+        load = 0
+        reset_time = now
+
+    load += 1
+
+    response = await call_next(request)
+    return response
+
 @app.on_event("startup")
-def startup_db_client():
-    logging.info("Successfully connected to the Postgres database...")
+async def startup_db_client():
+    logging.info("Successfully connected to the MongoDB database...")
+    data = {"service_type": "graphic_service",
+            "address": HOST,
+            "inner_port": PORT,
+            "extern_port": 8002
+            }
+    response = requests.post("http://localhost:4000/register", json=data)
+    # http://service_discovery_container:4000/register
+    if response.status_code != 200:
+        raise Exception(f"Failed to register into Service Discovery...")
+    else:
+        logging.info("Successfully registered into Service Discovery...")
 
 
 @app.on_event("shutdown")

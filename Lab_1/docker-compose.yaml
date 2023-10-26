@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  service_discovery:
+    build: ./service_discovery
+    image: service_discovery_v1
+    ports:
+      - "4000:4000"
+      - "4001:4001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  gateway:
+    build: ./gateway
+    image: gateway_v1
+    ports:
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - service_discovery
+
+  report_manager:
+    build: ./report_manager
+    image: report_manager_v1
+    ports:
+      - "8001:8001"
+    depends_on:
+      - service_discovery
+      - gateway
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: dnsrr
+
+  graphics_manager:
+    build: ./graphics_manager
+    image: graphics_manager_v1
+    ports:
+      - "8002:8002"
+    depends_on:
+      - service_discovery
+      - gateway
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: dnsrr
