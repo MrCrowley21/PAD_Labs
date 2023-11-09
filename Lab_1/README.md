@@ -24,7 +24,7 @@ task (Data Streaming Ingestion, Processing, etc.).
 The developed system is planned to have the architecture presented in Figure 1.
 
 <p align="center">
-    <img src="images/system_architecture_schema.png" alt="System_Architecture_Schema" style="width:700px;"/>
+    <img src="images/system_architecture_updated.png" alt="System_Architecture_Schema" style="width:700px;"/>
 <br><em>Figure 1. The architecture of the described system</em>
 </p>
 
