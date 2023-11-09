@@ -21,12 +21,13 @@ defmodule CircuitBreaker do
       try do
         IO.inspect(address)
         IO.inspect(port)
-        _response = HTTPoison.get!("http://localhost:#{port}/health", timeout: @timeout)
+        _response = HTTPoison.get!("http://#{address}:#{port}/health", timeout: @timeout)
+        # "http://localhost:#{port}/health"
         Logger.info("Circuit Breaker: #{address} status: ok.")
       rescue
         HTTPoison.Error ->
           Logger.info("Circuit Breaker: Timeout exceeded. Testing server for availability.")
-          status = test_server_availability("http://locallhost:#{port}/health", 3)
+          status = test_server_availability("http://localhost:#{port}/health", 3)
           if status == "fail" do
             Logger.info("Circuit Breaker: #{address} failed.")
             service_type = service|> elem(3)

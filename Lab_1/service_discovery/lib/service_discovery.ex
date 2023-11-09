@@ -38,7 +38,7 @@ defmodule ServiceDiscovery.Server do
       for service <- service_list do
         address = service|> elem(1)
         port = service|> elem(0)
-        state = HTTPoison.get!("http://#{address}:#{port}/health", timeout: @timeout)
+        state = HTTPoison.get!("http://localhost:#{port}/health", timeout: @timeout)
         json_data = Jason.decode!(state.body)
         load = Map.get(json_data, "load")
         if load > @max_load_per_service do

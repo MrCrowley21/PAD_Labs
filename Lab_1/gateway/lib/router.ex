@@ -10,8 +10,12 @@ defmodule Router do
 
   @timeout 5000
 
+  get "/status" do
+    send_resp(conn, 200, Poison.encode!(%{status: "ok"}))
+  end
+
   get "/health" do
-    send_resp(conn, 200, Poison.encode!(%{session_id: "AGAYGUJNKDML3JPJKKGUFJC"}))
+    send_resp(conn, 200, Poison.encode!(%{status: "ok"}))
   end
 
   get "/report_retrieving" do

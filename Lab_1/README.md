@@ -74,7 +74,7 @@ The following endpoints are planned to be added to the described system:
 
 ### Common
 
-- API Health Checking
+- **API Health Checking**
 ```
 Endpoint: /health
 Method: GET
@@ -139,7 +139,7 @@ body:
 }
 ```
 
-- Data Visualization for default period of time (3 months)
+- **Data Visualization for default period of time (3 months)**
 
 ```
 Endpoint: /data_visualization
@@ -351,8 +351,8 @@ body:
 }
 ```
 
-- Report generation for monitoring dynamic of the analyzed data for the specified
-time period
+- **Report generation for monitoring dynamic of the analyzed data for the specified
+time period**
 
 ```
 Endpoint: /report_generation
@@ -383,7 +383,7 @@ body:
 }
 ```
 
-- Report retrieving based on the report name
+- **Report retrieving based on the report name**
 
 ```
 Endpoint: /report_retrieving
@@ -798,6 +798,43 @@ horizontal type of scaling, to ensure the loose coupling in microservices and
 the system resilience. It is considering the possibility of migrating the system
 on Kubernetes following the latter versions, as it provides a great help in app 
 monitoring and automatizes scaling process. 
+
+## Running
+1. Make sure you have Docker installed on your machine (you can get it [here](https://docs.docker.com/engine/install/)).
+2. Clone the project.
+3. Pull all the required images.
+```
+docker pull mrcrowley21/padlab1
+```
+4. Run the application (make sure you are in the root folder f the project).
+```
+docker compose up --build
+```
+
+You might be needed to wait for a bit (at least 10s) for the containers to start and the
+communication between them to be initiated.
+In case you want to test the connection, make a call to status endpoint:
+For Gateway:
+```
+GET http://127.0.0.1:8000/status
+```
+For Report Service:
+```
+GET http://127.0.0.1:8001/status
+```
+For Graphic Service:
+```
+GET http://127.0.0.1:8002/status
+```
+
+After testing the connection and making sure everything works, you might try to address 
+to the endpoints the application provides (marked with bold for now).
+
+In case you need some help regarding the routes, please find out the postman collection 
+in the same folder with this document. You can use them to test either a certain endpoint 
+is working or not.
+
+In case the connection does not work, please rebuild the app! :)
 
 ## Bibliography
 1. https://streamsets.com/blog/what-is-streaming-analytics/

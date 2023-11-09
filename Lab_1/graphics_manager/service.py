@@ -44,9 +44,10 @@ def get_db():
         app.db.close()
 
 
-@app.get("/")
+@app.get("/status")
 def test_fast_api():
-    return {"Test Graphic Manager Service"}
+    return {"status": "ok",
+            "message": "Test Report Manager Service"}
 
 
 @app.get("/health")
@@ -77,6 +78,7 @@ async def count_requests_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
+
 @app.on_event("startup")
 async def startup_db_client():
     logging.info("Successfully connected to the MongoDB database...")
@@ -86,7 +88,7 @@ async def startup_db_client():
             "extern_port": 8002
             }
     response = requests.post("http://localhost:4000/register", json=data)
-    # http://service_discovery_container:4000/register
+    # http://service_discovery_container:4000/register {SERVICE_DISCOVERY_HOSTNAME}:{SERVICE_DISCOVERY_PORT}/register
     if response.status_code != 200:
         raise Exception(f"Failed to register into Service Discovery...")
     else:

@@ -37,7 +37,7 @@ async def startup_db_client():
             "inner_port": PORT,
             "extern_port": 8001
             }
-    response = requests.post("http://localhost:4000/register", json=data)
+    response = requests.post(f"http://localhost:4000/register", json=data)
     # http://service_discovery_container:4000/register
     if response.status_code != 200:
         raise Exception(f"Failed to register into Service Discovery...")
@@ -51,9 +51,10 @@ def shutdown_db_client():
     app.mongodb_client.close()
 
 
-@app.get("/")
+@app.get("/status")
 def test_fast_api():
-    return {"Test Report Manager Service"}
+    return {"status": "ok",
+            "message": "Test Report Manager Service"}
 
 
 @app.middleware("http")
@@ -76,7 +77,7 @@ def read_status():
     global load
     return {
               "data_base": "connected",
-              "load": load,
+              "load": 10,
             }
 
 
