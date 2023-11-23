@@ -21,7 +21,7 @@ defmodule CircuitBreaker do
       try do
         IO.inspect(address)
         IO.inspect(port)
-        _response = HTTPoison.get!("http://#{address}:#{port}/health", timeout: @timeout)
+        _response = HTTPoison.get!("http://localhost:#{port}/health", timeout: @timeout)
         # "http://localhost:#{port}/health"
         Logger.info("Circuit Breaker: #{address} status: ok.")
       rescue

@@ -18,7 +18,7 @@ defmodule Router do
   end
 
   match _ do
-    send_resp(conn, 404, "oopsi! Not such an address")
+    send_resp(conn, 404, "Oopsi! Not such an address")
   end
 
 end

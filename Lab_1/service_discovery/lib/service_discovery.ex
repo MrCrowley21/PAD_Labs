@@ -10,6 +10,7 @@ defmodule ServiceDiscovery.Server do
   require Logger
 
   @max_load_per_service 15
+  @max_service_call 2
   @timeout 5000
 
   @spec register_service(Register.t(), GRPC.Server.Stream.t()) :: RegistrationResult.t()
@@ -27,10 +28,15 @@ defmodule ServiceDiscovery.Server do
     extracted_data = :ets.tab2list(String.to_atom(request.service_type))
     Logger.info("List of available services:")
     IO.inspect(extracted_data)
-    evaluated_service = choose_less_loaded_service(extracted_data)
-    Logger.info("The chosen service...")
-    IO.inspect(evaluated_service)
-    %ReturnService{address: evaluated_service|> elem(1), inner_port: evaluated_service|> elem(2), ready: (evaluated_service|> elem(0) < @max_load_per_service)}
+    evaluated_services = choose_less_loaded_service(extracted_data)
+    chosen_replica = find_available_replica(evaluated_services, @max_service_call)
+    if chosen_replica != "unavailable" do
+      Logger.info("The chosen service...")
+      IO.inspect(chosen_replica)
+      %ReturnService{address: chosen_replica|> elem(1), inner_port: chosen_replica|> elem(2), ready: (chosen_replica|> elem(0) < @max_load_per_service)}
+    else
+      %ReturnService{address: chosen_replica, inner_port: "0", ready: False}
+    end
   end
 
   defp choose_less_loaded_service(service_list) do
@@ -46,8 +52,22 @@ defmodule ServiceDiscovery.Server do
         end
         {load, address, port}
       end
-    load_per_server = load_per_server|> List.keysort(0)
-    List.first(load_per_server)
+    load_per_server
+  end
+
+  defp find_available_replica([evaluated_address | address_list], tries) when tries > 0 do
+    try do
+      HTTPoison.get!(evaluated_address|> elem(1), timeout: @timeout * 3.5)
+      Logger.info("Suitable replica found: #{evaluated_address|> elem(1)}.")
+      evaluated_address
+    rescue
+      HTTPoison.Error ->
+        find_available_replica(address_list, tries - 1)
+    end
+  end
+
+  defp find_available_replica([_evaluated_address | _address_list], tries) when tries == 0 do
+    "unavailable"
   end
 
 end
