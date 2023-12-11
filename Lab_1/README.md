@@ -37,7 +37,7 @@ components and their functionalities can be denoted:
   should handle the next stream, when to create and destroy components of the same 
   type;
 - __StreamProcessingService__: the service that gets and processes all gotten data, 
-storing it into a temporary storage afterwards; several components can be mentioned:
+storing it into a temporary storage afterward; several components can be mentioned:
     - _DataStreamGetter_: the entity that gets all data from and stores it into
   the temporary data store;
     - _DataStreamProcessor_: the entity that processes all the analytics from
