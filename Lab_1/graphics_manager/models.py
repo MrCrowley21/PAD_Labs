@@ -4,6 +4,6 @@ from pydantic import BaseModel
 
 class AnalyticGraph(BaseModel):
     id: int
-    connection_id: str
+    connectionId: str
     created_at: datetime
     diagram: str

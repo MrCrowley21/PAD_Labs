@@ -9,7 +9,7 @@ defmodule ServiceDiscovery.Server do
   use GRPC.Server, service: ServiceDiscoveryRegister.Service
   require Logger
 
-  @max_load_per_service 15
+  @max_load_per_service 20
   @max_service_call 2
   @timeout 5000
 
@@ -33,7 +33,7 @@ defmodule ServiceDiscovery.Server do
     if chosen_replica != "unavailable" do
       Logger.info("The chosen service...")
       IO.inspect(chosen_replica)
-      %ReturnService{address: chosen_replica|> elem(1), inner_port: chosen_replica|> elem(2), ready: (chosen_replica|> elem(0) < @max_load_per_service)}
+      %ReturnService{address: chosen_replica|> elem(1), inner_port: to_string(chosen_replica|> elem(2)), ready: (chosen_replica|> elem(0) < @max_load_per_service)}
     else
       %ReturnService{address: chosen_replica, inner_port: "0", ready: False}
     end
@@ -42,9 +42,9 @@ defmodule ServiceDiscovery.Server do
   defp choose_less_loaded_service(service_list) do
     load_per_server =
       for service <- service_list do
-        address = service|> elem(1)
-        port = service|> elem(0)
-        state = HTTPoison.get!("http://localhost:#{port}/health", timeout: @timeout)
+        address = service|> elem(0)
+        port = service|> elem(1)
+        state = HTTPoison.get!("http://#{address}:#{port}/health", timeout: @timeout)
         json_data = Jason.decode!(state.body)
         load = Map.get(json_data, "load")
         if load > @max_load_per_service do
@@ -57,8 +57,13 @@ defmodule ServiceDiscovery.Server do
 
   defp find_available_replica([evaluated_address | address_list], tries) when tries > 0 do
     try do
-      HTTPoison.get!(evaluated_address|> elem(1), timeout: @timeout * 3.5)
-      Logger.info("Suitable replica found: #{evaluated_address|> elem(1)}.")
+      address = evaluated_address|> elem(1)
+      port = evaluated_address|> elem(2)
+      IO.inspect(evaluated_address)
+      IO.inspect(address)
+      IO.inspect(port)
+      # _ = HTTPoison.get!("http://#{address}:#{port}/status", timeout: @timeout * 3.5)
+      Logger.info("Suitable replica found: #{address}.")
       evaluated_address
     rescue
       HTTPoison.Error ->

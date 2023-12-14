@@ -1,5 +1,19 @@
 version: '3.8'
 
+networks:
+  redis_cluster_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 173.18.0.0/16
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.13.0.0/16
+
 services:
   service_discovery:
     build: ./service_discovery
@@ -7,18 +21,33 @@ services:
     ports:
       - "4000:4000"
       - "4001:4001"
+    healthcheck:
+      test: curl -f http://service_discovery:4000/status
+      interval: 1s
+      timeout: 3s
+      retries: 30
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - app_net
 
   gateway:
     build: ./gateway
     image: gateway_v1
     ports:
       - "8000:8000"
+    healthcheck:
+      test: curl -f http://gateway:8000/status
+      interval: 1s
+      timeout: 3s
+      retries: 30
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
-      - service_discovery
+      service_discovery:
+          condition: service_healthy
+    networks:
+      - app_net
 
   report_manager:
     build: ./report_manager
@@ -26,14 +55,24 @@ services:
     ports:
       - "8001"
     depends_on:
-      - service_discovery
-      - gateway
+      service_discovery:
+        condition: service_healthy
+      gateway:
+        condition: service_healthy
+      manager_db:
+        condition: service_healthy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SERVICE_DISCOVERY_HOST=service_discovery
+      - SERVICE_DISCOVERY_PORT=4000
+      - SELF_PORT=8001
     deploy:
       mode: replicated
       replicas: 2
       endpoint_mode: dnsrr
+    networks:
+      - app_net
 
   graphics_manager:
     build: ./graphics_manager
@@ -41,11 +80,122 @@ services:
     ports:
       - "8002"
     depends_on:
-      - service_discovery
-      - gateway
+      service_discovery:
+        condition: service_healthy
+      gateway:
+        condition: service_healthy
+      manager_db:
+        condition: service_healthy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SERVICE_DISCOVERY_HOST=service_discovery
+      - SERVICE_DISCOVERY_PORT=4000
+      - SELF_PORT=8002
+      - DB_HOST=graphics_manager_db
+      - DB_PORT=5432
     deploy:
       mode: replicated
       replicas: 2
       endpoint_mode: dnsrr
+    networks:
+      - app_net
+
+  redis_node_1:
+    image: redis:7.2
+    restart: always
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --appendonly no --cluster-node-timeout 5000 --protected-mode no
+    ports:
+      - '6379'
+    volumes:
+      - redis_node_1:/data
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.5
+      app_net:
+
+  redis_node_2:
+    image: redis:7.2
+    restart: always
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --appendonly no --cluster-node-timeout 5000 --protected-mode no
+    ports:
+      - '6379'
+    volumes:
+      - redis_node_2:/data
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.6
+      app_net:
+
+  redis_node_3:
+    image: redis:7.2
+    restart: always
+    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --appendonly no --cluster-node-timeout 5000 --protected-mode no
+    ports:
+      - '6379'
+    volumes:
+      - redis_node_3:/data
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.7
+      app_net:
+
+  redis_cluster:
+    image: redis:7.2
+    command: redis-cli -p 7000 --cluster create 173.18.0.5:6379 173.18.0.6:6379 173.18.0.7:6379 --cluster-replicas 0 --cluster-yes
+    ports:
+      - '7000:7000'
+    depends_on:
+      - redis_node_1
+      - redis_node_2
+      - redis_node_3
+    networks:
+      redis_cluster_net:
+        ipv4_address: 173.18.0.11
+
+  manager_db:
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb:/data/report_manager_db
+    networks:
+      app_net:
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+
+#  graphics_manager_db:
+#    image: mongo:latest
+#    ports:
+#      - '27017:27017'
+#    volumes:
+#      - mongodb:/data/report_manager_db
+#    networks:
+#      app_net:
+#    healthcheck:
+#      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+
+  prometheus:
+    image: prom/prometheus:v2.47.2
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/
+
+volumes:
+  redis_node_1:
+  redis_node_2:
+  redis_node_3:
+  mongodb:
+    driver: local

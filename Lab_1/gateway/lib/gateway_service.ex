@@ -26,7 +26,8 @@ defmodule GatewayService do
 
   defp register_gateway(service_type, address, inner_port, extern_port) do
     # localhost
-    {:ok, channel} = GRPC.Stub.connect("localhost:4001", timeout: @timeout)
+    {:ok, channel} = GRPC.Stub.connect("service_discovery:4001", timeout: @timeout)
+    # {:ok, channel} = GRPC.Stub.connect("localhost:4001", timeout: @timeout)
     request = %Register{service_type: service_type, address: address, inner_port: inner_port, extern_port: extern_port}
     response = channel|> ServiceDiscoveryRegister.Stub.register_service(request)
     IO.inspect(response)
@@ -35,7 +36,8 @@ defmodule GatewayService do
 
   def find_service(service_type) do
     # localhost
-    {:ok, channel} = GRPC.Stub.connect("localhost:4001", timeout: @timeout)
+    {:ok, channel} = GRPC.Stub.connect("service_discovery:4001", timeout: @timeout)
+    # {:ok, channel} = GRPC.Stub.connect("localhost:4001", timeout: @timeout)
     request = %RequestService{service_type: service_type}
     {_, response} = channel|> ServiceDiscoveryRegister.Stub.find_service(request)
     Logger.info("Service found...")
